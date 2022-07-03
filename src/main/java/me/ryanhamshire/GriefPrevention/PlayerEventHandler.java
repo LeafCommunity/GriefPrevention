@@ -59,6 +59,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.block.CauldronLevelChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
@@ -1647,6 +1648,28 @@ class PlayerEventHandler implements Listener
             GriefPrevention.sendMessage(player, TextMode.Err, noBuildReason);
             bucketEvent.setCancelled(true);
             return;
+        }
+    }
+
+    //prevent players from messing with claimed cauldrons
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    public void onPlayerChangeCauldron(CauldronLevelChangeEvent event)
+    {
+        Block block = event.getBlock();
+        if (!instance.claimsEnabledForWorld(block.getWorld())) return;
+
+        Entity entity = event.getEntity();
+        if (!(entity instanceof Player player)) return;
+
+        PlayerData playerData = instance.dataStore.getPlayerData(player.getUniqueId());
+        Claim claim = instance.dataStore.getClaimAt(entity.getLocation(), false, playerData.lastClaim);
+        if (playerData.ignoreClaims || claim == null) return;
+
+        Supplier<String> failureReason = claim.checkPermission(player, ClaimPermission.Access, event);
+        if (failureReason != null)
+        {
+            event.setCancelled(true);
+            GriefPrevention.sendMessage(player, TextMode.Err, failureReason.get());
         }
     }
 
