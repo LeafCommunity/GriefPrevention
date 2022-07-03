@@ -1655,6 +1655,8 @@ class PlayerEventHandler implements Listener
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     public void onPlayerChangeCauldron(CauldronLevelChangeEvent event)
     {
+        if (!instance.config_claims_cauldronsRequireAccessTrust) return;
+
         Block block = event.getBlock();
         if (!instance.claimsEnabledForWorld(block.getWorld())) return;
 
@@ -1670,6 +1672,7 @@ class PlayerEventHandler implements Listener
         {
             event.setCancelled(true);
             GriefPrevention.sendMessage(player, TextMode.Err, failureReason.get());
+            return;
         }
     }
 
